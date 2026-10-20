@@ -1,8 +1,14 @@
 {
   "settings": {
+    "adMainEnabled": true,
+    "adPostEnabled": true,
+    "adTopEnabled": true,
+    "adSidebarEnabled": true,
+    "adInArticleEnabled": true,
+    "adBottomEnabled": true,
     "blogTitle": "MINIMAL LOG.",
     "blogSubtitle": "일상과 기술, 그리고 생각을 기록하는 심플한 공간",
-    "allowSignup": true,
+    "allowSignup": false,
     "adsenseEnabled": true,
     "adsenseClientId": "ca-pub-0000000000000000",
     "adSlotTop": "1111111111",
@@ -30,6 +36,32 @@
   ],
   "posts": [
     {
+      "id": "post_1792485611527",
+      "title": "jhklk",
+      "summary": "jkllllll 9jklllll \"여기에 인상적인 인용구나 핵심 문장을 입력해 보세요.\" — 출처 또는 작성자 사진 설명을 입력하세요 사진 설명을 asdfsdfasdf입력하세요 xcvvvv 사진 설명을 입력adfffasdf하세요asdfasdfasdf",
+      "category": "일상/생각",
+      "tags": [],
+      "thumbnail": "/uploads/1792485518455-109649.jpg",
+      "content": "<figure class=\"se-image se-align-center\" style=\"width: 40%;\">\n            <figure class=\"se-image se-align-center\" style=\"width: 100%;\">\n            <figure class=\"se-image se-align-center\" style=\"width: 100%;\">\n            <figure class=\"se-image se-align-center\" style=\"width: 100%;\">\n            <figure class=\"se-image se-align-center\" style=\"width: 100%;\">\n            <hr class=\"se-hr\"><p><br></p><p><br></p><p>jkllllll</p><hr class=\"se-hr\"><p>9jklllll<span style=\"background-color: rgb(243, 244, 246); font-style: italic; font-size: 1.06rem;\">\"여기에 인상적인 인용구나 핵심 문장을 입력해 보세요.\"</span></p><blockquote class=\"se-quote se-quote-line\">\n        \n        <cite>— 출처 또는 작성자</cite>\n      </blockquote>\n      <p><br></p><img src=\"/uploads/1792485518455-109649.jpg\" alt=\"1792485515161-686130.jpg\">\n            <figcaption>사진 설명을 입력하세요</figcaption>\n          </figure>\n          <p><br></p><figcaption><br></figcaption></figure></figure><p>\n      </p><p><br></p><figcaption>사진 설명을 asdfsdfasdf입력하세요</figcaption>\n          </figure>\n          <p>xcvvvv</p><figcaption>사진 설명을 입력adfffasdf하세요asdfasdfasdf</figcaption>\n          </figure><p class=\"se-text\">\n          </p><p><br></p>",
+      "attachments": [
+        {
+          "url": "/uploads/1792485594340-48155.jpg",
+          "filename": "1792485594340-48155.jpg",
+          "originalName": "포미아구찜 (1).jpg",
+          "size": 154749,
+          "mimetype": "image/jpeg"
+        }
+      ],
+      "authorId": "u_admin",
+      "authorName": "관리자",
+      "views": 2,
+      "likes": 0,
+      "createdAt": "2026-10-20T08:40:11.527Z",
+      "updatedAt": "2026-10-20T08:40:11.527Z",
+      "postNumber": 4,
+      "status": "published"
+    },
+    {
       "id": "post_1792484506388",
       "title": "ldsfff",
       "summary": "sdfff \"여기에 인asdff상적인 인용구나 핵심 문장을 입력해 보세요.\" — 출처 또asdff는 작성자 sadff 사진 설명을 입력하세요",
@@ -51,7 +83,9 @@
       "views": 2,
       "likes": 0,
       "createdAt": "2026-10-20T08:21:46.388Z",
-      "updatedAt": "2026-10-20T08:21:46.388Z"
+      "updatedAt": "2026-10-20T08:21:46.388Z",
+      "postNumber": 3,
+      "status": "published"
     },
     {
       "id": "post_1",
@@ -72,7 +106,9 @@
       "views": 128,
       "likes": 14,
       "createdAt": "2026-10-18T08:07:05.322Z",
-      "updatedAt": "2026-10-18T08:07:05.322Z"
+      "updatedAt": "2026-10-18T08:07:05.322Z",
+      "postNumber": 1,
+      "status": "published"
     },
     {
       "id": "post_2",
@@ -89,14 +125,17 @@
       "attachments": [],
       "authorId": "u_admin",
       "authorName": "관리자",
-      "views": 85,
-      "likes": 9,
+      "views": 86,
+      "likes": 22,
       "createdAt": "2026-10-19T08:07:05.322Z",
-      "updatedAt": "2026-10-19T08:07:05.322Z"
+      "updatedAt": "2026-10-19T08:07:05.322Z",
+      "postNumber": 2,
+      "status": "published"
     }
   ],
   "viewLogs": {
-    "v_1fgn95zsh_1792483849580_post_2": 1792484275684,
-    "v_1fgn95zsh_1792483849580_post_1792484506388": 1792484506400
+    "v_1fgn95zsh_1792483849580_post_2": 1792485629989,
+    "v_1fgn95zsh_1792483849580_post_1792484506388": 1792484506400,
+    "v_1fgn95zsh_1792483849580_post_1792485611527": 1792485611539
   }
 }

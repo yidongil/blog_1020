@@ -21,7 +21,9 @@ const app = {
   categories: [],
   user: null,
   posts: [],
-  stats: { totalPosts: 0, totalViews: 0, totalUsers: 0 },
+  adminPosts: [],
+  adminPostFilter: 'all',
+  stats: { totalPosts: 0, totalDrafts: 0, totalViews: 0, totalUsers: 0 },
   currentCategory: '전체',
   currentSort: 'latest',
   currentPost: null,
@@ -313,7 +315,10 @@ const app = {
       return `
         <article class="post-card" onclick="app.openPost('${post.id}')">
           <div class="post-card-body">
-            <span class="post-card-cat">${this.escapeHtml(post.category)}</span>
+            <div>
+              <span class="post-no-pill">No. ${post.postNumber || 1}</span>
+              <span class="post-card-cat">${this.escapeHtml(post.category)}</span>
+            </div>
             <h2 class="post-card-title">${this.escapeHtml(post.title)}</h2>
             <p class="post-card-summary">${this.escapeHtml(post.summary || '')}</p>
             <div class="post-card-meta">
@@ -411,7 +416,12 @@ const app = {
       const post = data.post;
       this.currentPost = post;
 
+      document.getElementById('detailPostNumber').textContent = `No. ${post.postNumber || 1}`;
       document.getElementById('detailCategory').textContent = post.category;
+      const draftBadge = document.getElementById('detailDraftBadge');
+      if (draftBadge) {
+        draftBadge.classList.toggle('hidden', post.status !== 'draft');
+      }
       document.getElementById('detailTitle').textContent = post.title;
       document.getElementById('detailAuthor').textContent = post.authorName || '작성자';
       document.getElementById('detailDate').textContent = this.formatDate(post.createdAt, true);
@@ -648,42 +658,110 @@ const app = {
     });
   },
 
+  setAdminPostFilter(filterType) {
+    this.adminPostFilter = filterType;
+    document.querySelectorAll('.admin-status-filter .filter-chip').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === filterType);
+    });
+    this.renderAdminPostsTable();
+  },
+
+  renderAdminPostsTable() {
+    const postsTbody = document.getElementById('adminPostsTableBody');
+    if (!postsTbody) return;
+
+    const allPosts = this.adminPosts || [];
+    const pubCount = allPosts.filter(p => p.status !== 'draft').length;
+    const draftCount = allPosts.filter(p => p.status === 'draft').length;
+
+    const cAll = document.getElementById('adminCountAll');
+    const cPub = document.getElementById('adminCountPublished');
+    const cDraft = document.getElementById('adminCountDraft');
+    if (cAll) cAll.textContent = allPosts.length;
+    if (cPub) cPub.textContent = pubCount;
+    if (cDraft) cDraft.textContent = draftCount;
+
+    const filtered = allPosts.filter(p => {
+      if (this.adminPostFilter === 'published') return p.status !== 'draft';
+      if (this.adminPostFilter === 'draft') return p.status === 'draft';
+      return true;
+    });
+
+    if (!filtered.length) {
+      postsTbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">
+            해당 조건의 게시글이 없습니다.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    postsTbody.innerHTML = filtered.map(p => {
+      const isDraft = p.status === 'draft';
+      const statusBadge = isDraft
+        ? `<span class="status-pill-draft">임시저장</span>`
+        : `<span class="status-pill-published">발행됨</span>`;
+
+      return `
+        <tr>
+          <td><span class="post-no-pill">No. ${p.postNumber || 1}</span></td>
+          <td>${statusBadge}</td>
+          <td><span class="role-badge">${this.escapeHtml(p.category)}</span></td>
+          <td>
+            <strong style="cursor:pointer;" onclick="${isDraft ? `editor.openEdit('${p.id}')` : `app.openPost('${p.id}')`}">
+              ${this.escapeHtml(p.title)}
+            </strong>
+          </td>
+          <td>${this.escapeHtml(p.authorName || '관리자')}</td>
+          <td>${this.formatDate(p.updatedAt || p.createdAt, true)}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input type="number" min="0" class="view-edit-input" id="viewInput_${p.id}" value="${p.views || 0}" />
+              <button class="btn btn-outline btn-xs" onclick="app.updatePostViews('${p.id}')">적용</button>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${isDraft
+                ? `<button class="btn btn-primary btn-xs" onclick="app.publishDraftNow('${p.id}')">발행하기</button>`
+                : ''
+              }
+              <button class="btn btn-outline btn-xs" onclick="editor.openEdit('${p.id}')">
+                ${isDraft ? '이어쓰기' : '수정'}
+              </button>
+              <button class="btn btn-outline btn-xs text-danger" onclick="app.deletePost('${p.id}', true)">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  async publishDraftNow(postId) {
+    try {
+      await this.api(`/api/posts/${postId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'published' })
+      });
+      await this.loadAdminTables();
+      this.toast('임시저장 글이 정식 발행되었습니다!');
+    } catch (err) {
+      this.toast(err.message, true);
+    }
+  },
+
   async loadAdminTables() {
     try {
       const [initRes, postsRes, usersRes] = await Promise.all([
         this.api('/api/init'),
-        this.api('/api/posts'),
+        this.api('/api/posts?includeDrafts=1'),
         this.api('/api/users')
       ]);
-      this.posts = postsRes.posts || [];
+      this.adminPosts = postsRes.posts || [];
       this.renderBrandingAndStats(initRes.stats);
-
-      // Render Posts Management Table
-      const postsTbody = document.getElementById('adminPostsTableBody');
-      if (postsTbody) {
-        postsTbody.innerHTML = this.posts.map(p => `
-          <tr>
-            <td><span class="role-badge">${this.escapeHtml(p.category)}</span></td>
-            <td>
-              <strong style="cursor:pointer;" onclick="app.openPost('${p.id}')">${this.escapeHtml(p.title)}</strong>
-            </td>
-            <td>${this.escapeHtml(p.authorName || '관리자')}</td>
-            <td>${this.formatDate(p.createdAt)}</td>
-            <td>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <input type="number" min="0" class="view-edit-input" id="viewInput_${p.id}" value="${p.views || 0}" />
-                <button class="btn btn-outline btn-xs" onclick="app.updatePostViews('${p.id}')">적용</button>
-              </div>
-            </td>
-            <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-outline btn-xs" onclick="editor.openEdit('${p.id}')">수정</button>
-                <button class="btn btn-outline btn-xs text-danger" onclick="app.deletePost('${p.id}', true)">삭제</button>
-              </div>
-            </td>
-          </tr>
-        `).join('');
-      }
+      this.renderAdminPostsTable();
 
       // Render Users Management Table
       const usersTbody = document.getElementById('adminUsersTableBody');
@@ -876,18 +954,9 @@ const editor = {
     document.getElementById('editorTitleInput').value = '';
     document.getElementById('editorCanvas').innerHTML = '<p class="se-text"><br></p>';
     document.getElementById('editorTagsInput').value = '';
-
-    const savedDraft = localStorage.getItem('smartblog_draft');
-    if (savedDraft) {
-      try {
-        const draft = JSON.parse(savedDraft);
-        if (draft.title || draft.content) {
-          document.getElementById('editorSaveStatus').textContent = '임시저장된 글이 있습니다';
-        }
-      } catch (e) {}
-    } else {
-      document.getElementById('editorSaveStatus').textContent = '스마트 에디터 ONE';
-    }
+    document.getElementById('editorSaveStatus').textContent = '스마트 에디터 ONE';
+    const noBadge = document.getElementById('editorPostNoBadge');
+    if (noBadge) noBadge.textContent = '새 게시글 (발행/임시저장 시 번호 자동 부여)';
 
     this.renderEditorAttachments();
     app.switchView('editorView');
@@ -906,7 +975,12 @@ const editor = {
       document.getElementById('editorTitleInput').value = post.title;
       document.getElementById('editorCanvas').innerHTML = post.content || '<p><br></p>';
       document.getElementById('editorTagsInput').value = (post.tags || []).join(', ');
-      document.getElementById('editorSaveStatus').textContent = '게시글 수정 모드';
+      document.getElementById('editorSaveStatus').textContent =
+        post.status === 'draft' ? `임시저장 글 편집 중 (No. ${post.postNumber || 1})` : `게시글 수정 모드 (No. ${post.postNumber || 1})`;
+      const noBadge = document.getElementById('editorPostNoBadge');
+      if (noBadge) {
+        noBadge.textContent = `No. ${post.postNumber || 1} · ${post.status === 'draft' ? '임시저장 상태' : '발행됨'}`;
+      }
 
       this.renderEditorAttachments();
       app.switchView('editorView');
@@ -924,15 +998,52 @@ const editor = {
     }
   },
 
-  saveDraftLocal() {
-    const draft = {
-      title: document.getElementById('editorTitleInput').value,
-      content: document.getElementById('editorCanvas').innerHTML,
-      tags: document.getElementById('editorTagsInput').value
+  // Save directly to server as a draft post so it is managed in Admin -> Posts & View Count Management
+  async saveAsServerDraft() {
+    this.deselectFigure();
+    const rawTitle = document.getElementById('editorTitleInput').value.trim();
+    const title = rawTitle || `(임시저장) ${new Date().toLocaleString('ko-KR')}`;
+    const category = document.getElementById('editorCategory').value;
+    const content = document.getElementById('editorCanvas').innerHTML;
+    const tagsRaw = document.getElementById('editorTagsInput').value;
+    const tags = tagsRaw.split(',').map(t => t.replace(/^#/, '').trim()).filter(Boolean);
+
+    const payload = {
+      title,
+      category,
+      content,
+      tags,
+      status: 'draft',
+      thumbnail: this.customThumbnail,
+      attachments: this.attachments
     };
-    localStorage.setItem('smartblog_draft', JSON.stringify(draft));
-    document.getElementById('editorSaveStatus').textContent = '임시저장 완료 (' + new Date().toLocaleTimeString() + ')';
-    app.toast('브라우저에 임시저장되었습니다.');
+
+    try {
+      let saved;
+      if (this.editingPostId) {
+        saved = await app.api(`/api/posts/${this.editingPostId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+      } else {
+        saved = await app.api('/api/posts', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        this.editingPostId = saved.post.id;
+      }
+
+      const postNo = saved.post.postNumber || 1;
+      document.getElementById('editorTitleInput').value = saved.post.title;
+      document.getElementById('editorSaveStatus').textContent =
+        `임시저장 완료 (No. ${postNo} · ${new Date().toLocaleTimeString()})`;
+      const noBadge = document.getElementById('editorPostNoBadge');
+      if (noBadge) noBadge.textContent = `No. ${postNo} · 임시저장 상태`;
+
+      app.toast(`📁 No. ${postNo} 게시글이 [게시글 및 조회수 관리]에 임시저장되었습니다.`);
+    } catch (err) {
+      app.toast(err.message, true);
+    }
   },
 
   exec(command, value = null) {
@@ -1151,6 +1262,7 @@ const editor = {
       category,
       content,
       tags,
+      status: 'published',
       thumbnail: this.customThumbnail,
       attachments: this.attachments
     };

@@ -126,6 +126,31 @@ function readDB() {
     adBottomEnabled: true
   };
   db.settings = { ...defaultAdFlags, ...db.settings };
+
+  // Ensure every post has a sequential postNumber (oldest = 1) and status ('published' | 'draft')
+  let mutated = false;
+  const chrono = [...db.posts].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  let maxNo = chrono.reduce((m, p) => Math.max(m, p.postNumber || 0), 0);
+  if (maxNo === 0) {
+    chrono.forEach((p, idx) => {
+      p.postNumber = idx + 1;
+      if (!p.status) p.status = 'published';
+      mutated = true;
+    });
+  } else {
+    chrono.forEach(p => {
+      if (!p.postNumber) {
+        maxNo += 1;
+        p.postNumber = maxNo;
+        mutated = true;
+      }
+      if (!p.status) {
+        p.status = 'published';
+        mutated = true;
+      }
+    });
+  }
+  if (mutated) writeDB(db);
   return db;
 }
 
@@ -195,13 +220,16 @@ app.get('/api/init', (req, res) => {
       currentUser = { id: found.id, username: found.username, nickname: found.nickname, role: found.role };
     }
   }
-  const totalViews = db.posts.reduce((acc, p) => acc + (p.views || 0), 0);
+  const publishedPosts = db.posts.filter(p => p.status !== 'draft');
+  const draftPosts = db.posts.filter(p => p.status === 'draft');
+  const totalViews = publishedPosts.reduce((acc, p) => acc + (p.views || 0), 0);
   res.json({
     settings: db.settings,
     categories: db.categories,
     user: currentUser,
     stats: {
-      totalPosts: db.posts.length,
+      totalPosts: publishedPosts.length,
+      totalDrafts: draftPosts.length,
       totalViews,
       totalUsers: db.users.length
     }
@@ -302,8 +330,14 @@ app.post('/api/settings/toggle-signup', requireAdmin, (req, res) => {
 // 6. Posts: List Posts
 app.get('/api/posts', (req, res) => {
   const db = readDB();
-  const { category, q, sort } = req.query;
+  const { category, q, sort, includeDrafts } = req.query;
+  const user = getAuthUser(req);
   let posts = [...db.posts];
+
+  // Hide draft posts on public feed unless admin/author explicitly requests includeDrafts=1
+  if (!(includeDrafts === '1' && user)) {
+    posts = posts.filter(p => p.status !== 'draft');
+  }
 
   if (category && category !== '전체') {
     posts = posts.filter(p => p.category === category);
@@ -313,13 +347,14 @@ app.get('/api/posts', (req, res) => {
     posts = posts.filter(p =>
       p.title.toLowerCase().includes(query) ||
       p.summary.toLowerCase().includes(query) ||
+      String(p.postNumber || '').includes(query) ||
       (p.tags && p.tags.some(t => t.toLowerCase().includes(query)))
     );
   }
   if (sort === 'views') {
     posts.sort((a, b) => (b.views || 0) - (a.views || 0));
   } else {
-    posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    posts.sort((a, b) => (b.postNumber || 0) - (a.postNumber || 0));
   }
 
   res.json({ posts });
@@ -369,10 +404,13 @@ app.post('/api/posts/:id/like', (req, res) => {
   res.json({ likes: post.likes });
 });
 
-// 8. Create Post
+// 8. Create Post (Supports status: 'published' | 'draft')
 app.post('/api/posts', requireAuth, (req, res) => {
-  const { title, content, summary, category, tags, thumbnail, attachments } = req.body;
-  if (!title || !title.trim()) {
+  const { title, content, summary, category, tags, thumbnail, attachments, status } = req.body;
+  const postStatus = status === 'draft' ? 'draft' : 'published';
+  const safeTitle = (title && title.trim()) ? title.trim() : (postStatus === 'draft' ? '(제목 없는 임시저장 글)' : '');
+
+  if (!safeTitle) {
     return res.status(400).json({ error: '제목을 입력해 주세요.' });
   }
   const db = readDB();
@@ -386,9 +424,13 @@ app.post('/api/posts', requireAuth, (req, res) => {
     if (match) thumb = match[1];
   }
 
+  const maxNo = db.posts.reduce((m, p) => Math.max(m, p.postNumber || 0), 0);
+
   const newPost = {
     id: 'post_' + Date.now(),
-    title: title.trim(),
+    postNumber: maxNo + 1,
+    status: postStatus,
+    title: safeTitle,
     summary: autoSummary,
     category: category || '일상/생각',
     tags: Array.isArray(tags) ? tags : [],
@@ -397,7 +439,7 @@ app.post('/api/posts', requireAuth, (req, res) => {
     attachments: Array.isArray(attachments) ? attachments : [],
     authorId: req.user.id,
     authorName: req.user.nickname,
-    views: 1,
+    views: postStatus === 'draft' ? 0 : 1,
     likes: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -408,7 +450,7 @@ app.post('/api/posts', requireAuth, (req, res) => {
   res.json({ post: newPost });
 });
 
-// 9. Update Post
+// 9. Update Post (Supports updating status between 'draft' and 'published')
 app.put('/api/posts/:id', requireAuth, (req, res) => {
   const db = readDB();
   const postIndex = db.posts.findIndex(p => p.id === req.params.id);
@@ -419,7 +461,7 @@ app.put('/api/posts/:id', requireAuth, (req, res) => {
     return res.status(403).json({ error: '수정 권한이 없습니다.' });
   }
 
-  const { title, content, summary, category, tags, thumbnail, attachments } = req.body;
+  const { title, content, summary, category, tags, thumbnail, attachments, status } = req.body;
   const plainText = (content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
   let thumb = thumbnail !== undefined ? thumbnail : post.thumbnail;
@@ -428,8 +470,11 @@ app.put('/api/posts/:id', requireAuth, (req, res) => {
     if (match) thumb = match[1];
   }
 
+  const nextStatus = status === 'draft' ? 'draft' : (status === 'published' ? 'published' : (post.status || 'published'));
+
   db.posts[postIndex] = {
     ...post,
+    status: nextStatus,
     title: title ? title.trim() : post.title,
     content: content !== undefined ? content : post.content,
     summary: summary ? summary.trim() : plainText.slice(0, 160),

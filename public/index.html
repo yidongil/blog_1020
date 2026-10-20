@@ -167,7 +167,11 @@
 
         <article class="post-article">
           <header class="article-header">
-            <span id="detailCategory" class="article-category">카테고리</span>
+            <div class="article-badge-row">
+              <span id="detailPostNumber" class="article-no-badge">No. 1</span>
+              <span id="detailCategory" class="article-category">카테고리</span>
+              <span id="detailDraftBadge" class="status-pill-draft hidden">임시저장 글</span>
+            </div>
             <h1 id="detailTitle" class="article-title">게시글 제목</h1>
             <div class="article-meta">
               <div class="meta-left">
@@ -233,7 +237,9 @@
               <select id="editorCategory" class="se-category-select"></select>
             </div>
             <div class="se-topbar-right">
-              <button class="btn btn-outline btn-sm" onclick="editor.saveDraftLocal()">임시저장</button>
+              <button class="btn btn-outline btn-sm" onclick="editor.saveAsServerDraft()">
+                <i class="ri-draft-line"></i> 임시저장
+              </button>
               <button class="btn btn-primary" onclick="editor.publish()">
                 <i class="ri-check-line"></i> 발행하기
               </button>
@@ -352,13 +358,19 @@
 
         <!-- Paper Canvas Area -->
         <div class="se-paper-container" id="seDropZone">
-          <div class="se-paper">
-            <!-- Title Input -->
+          <!-- Separate Dedicated Title Box Above the Content Paper -->
+          <div class="se-title-box">
+            <div class="se-title-box-meta">
+              <span class="se-title-label"><i class="ri-Edit-2-line"></i> 게시글 제목</span>
+              <span id="editorPostNoBadge" class="se-post-no-chip">새 게시글</span>
+            </div>
             <input type="text" id="editorTitleInput" class="se-title-input" placeholder="제목을 입력하세요" />
-            <hr class="se-title-hr" />
+          </div>
 
+          <!-- Separate Content Paper Box Below -->
+          <div class="se-paper">
             <!-- Rich Content Editable Area -->
-            <div id="editorCanvas" class="se-canvas" contenteditable="true" data-placeholder="글감과 사진을 자유롭게 작성해 보세요. 이미지나 첨부파일을 이 영역으로 드래그 앤 드롭할 수도 있습니다."></div>
+            <div id="editorCanvas" class="se-canvas" contenteditable="true" data-placeholder="본문 내용과 사진을 자유롭게 작성해 보세요. 이미지나 첨부파일을 이 영역으로 드래그 앤 드롭할 수도 있습니다."></div>
 
             <!-- Attachments Tray inside Editor -->
             <div class="se-attachments-panel">
@@ -621,22 +633,37 @@
           </div>
         </div>
 
-        <!-- TAB 3: Posts & View Count Management -->
+        <!-- TAB 3: Posts, Post Numbers, Drafts & View Count Management -->
         <div id="adminTabPosts" class="admin-tab-panel hidden">
           <div class="admin-section">
-            <div class="switch-row" style="margin-bottom:14px;">
+            <div class="switch-row" style="margin-bottom:16px; flex-wrap:wrap;">
               <div>
-                <h4>전체 게시글 및 조회수 관리</h4>
-                <p>작성된 게시글의 조회수를 수정하거나 바로 편집·삭제할 수 있습니다.</p>
+                <h4>전체 게시글 · 임시저장 보관함 · 조회수 관리</h4>
+                <p>모든 게시글에 고유 번호(No.)가 부여되며, 에디터에서 <strong>[임시저장]</strong>한 글도 이곳에서 확인·이어쓰기·즉시 발행할 수 있습니다.</p>
               </div>
-              <button class="btn btn-primary btn-sm" onclick="editor.openNew()">
-                <i class="ri-quill-pen-line"></i> 새 게시글 쓰기
-              </button>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <div class="admin-status-filter">
+                  <button type="button" class="filter-chip active" data-filter="all" onclick="app.setAdminPostFilter('all')">
+                    전체 (<span id="adminCountAll">0</span>)
+                  </button>
+                  <button type="button" class="filter-chip" data-filter="published" onclick="app.setAdminPostFilter('published')">
+                    발행됨 (<span id="adminCountPublished">0</span>)
+                  </button>
+                  <button type="button" class="filter-chip" data-filter="draft" onclick="app.setAdminPostFilter('draft')">
+                    임시저장 (<span id="adminCountDraft">0</span>)
+                  </button>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="editor.openNew()">
+                  <i class="ri-quill-pen-line"></i> 새 게시글 쓰기
+                </button>
+              </div>
             </div>
             <div class="admin-table-wrap">
               <table class="admin-table">
                 <thead>
                   <tr>
+                    <th style="width:76px;">번호</th>
+                    <th style="width:95px;">상태</th>
                     <th>카테고리</th>
                     <th>제목</th>
                     <th>작성자</th>
