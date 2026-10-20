@@ -53,7 +53,7 @@ function initDB() {
           summary: '네이버 스마트에디터 ONE 스타일의 편리한 글쓰기, 내장 사진 편집기, 첨부파일 관리, 조회수 통계 및 구글 애드센스 광고 설정까지 모두 갖춘 반응형 블로그입니다.',
           category: '테크/개발',
           tags: ['블로그', '스마트에디터', '반응형웹', '애드센스'],
-          thumbnail: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1000&q=80',
+          thumbnail: '/uploads/sample-desk.svg',
           content: `
             <p class="se-text">안녕하세요! 새롭게 개설된 <strong>MINIMAL LOG.</strong>에 오신 것을 환영합니다. 이 블로그는 복잡한 요소는 덜어내고 오직 <strong>글과 사진, 그리고 독자의 가독성</strong>에 집중할 수 있도록 디자인되었습니다.</p>
             <blockquote class="se-quote se-quote-line">
@@ -63,7 +63,7 @@ function initDB() {
             <h3>✨ 주요 기능 안내</h3>
             <p class="se-text">상단 우측의 <strong>글쓰기</strong> 버튼을 눌러 스마트 에디터를 체험해 보세요. 기본 관리자 계정은 <code>admin</code> / 비밀번호 <code>admin1234</code> 입니다.</p>
             <figure class="se-image se-align-center" style="width: 100%;">
-              <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1000&q=80" alt="데스크 셋업" />
+              <img src="/uploads/sample-desk.svg" alt="데스크 셋업" />
               <figcaption>클릭 한 번으로 사진 필터, 회전, 크기 조절, 캡션 편집이 가능합니다.</figcaption>
             </figure>
             <hr class="se-hr hr-stars" />
@@ -83,11 +83,11 @@ function initDB() {
           summary: '별도의 포토샵이나 외부 프로그램 없이 에디터 안에서 바로 사진을 자르고, 밝기와 필터를 보정하고, 본문 폭에 맞게 정렬해 보세요.',
           category: '리뷰/노하우',
           tags: ['사진편집', '팁', '디자인'],
-          thumbnail: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=1000&q=80',
+          thumbnail: '/uploads/sample-camera.svg',
           content: `
             <p class="se-text">블로그 글을 작성할 때 가장 시간이 많이 걸리는 작업이 바로 사진 크기 조절과 색감 보정입니다. 스마트 에디터에서는 사진을 본문에 넣은 뒤 클릭하면 즉시 <strong>전용 플로팅 툴바</strong>가 나타납니다.</p>
             <figure class="se-image se-align-center" style="width: 100%;">
-              <img src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=1000&q=80" alt="카메라 사진" />
+              <img src="/uploads/sample-camera.svg" alt="카메라 사진" />
               <figcaption>내장 사진 편집 스튜디오에서 밝기, 대비, 채도, 세피아/빈티지 필터 및 크롭을 지원합니다.</figcaption>
             </figure>
             <p class="se-text">모바일, 태블릿, 데스크탑 어디서 접속하더라도 화면 크기에 맞춰 최적의 비율로 자동 리사이징됩니다.</p>

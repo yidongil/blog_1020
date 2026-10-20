@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg1)"/>
+  <circle cx="780" cy="140" r="180" fill="#10b981" opacity="0.18"/>
+  <circle cx="180" cy="420" r="220" fill="#38bdf8" opacity="0.12"/>
+  <rect x="140" y="120" width="680" height="300" rx="20" fill="#ffffff" opacity="0.08" stroke="#ffffff" stroke-opacity="0.2"/>
+  <text x="480" y="255" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="40" font-weight="800">MINIMAL LOG · SMART EDITOR</text>
+  <text x="480" y="305" text-anchor="middle" fill="#a7f3d0" font-family="sans-serif" font-size="20" font-weight="500">Clean Typography · Built-in Photo Studio · Responsive Web</text>
+</svg>
