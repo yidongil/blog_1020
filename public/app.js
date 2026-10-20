@@ -2,9 +2,9 @@
    SMART BLOG FRONTEND APPLICATION
    - Minimalist Responsive Blog + View Counter + AdSense
    - Auth System with Instant Signup Allow/Block Toggle
-   - Naver SmartEditor ONE Style Rich Block & Text Editor
-   - Built-in Canvas Photo Studio (Crop, Rotate, Filters, Adjustments)
-   - Easy Drag & Drop File Attachment Manager
+   - Dedicated Full-Page Admin Console (General, AdSense ON/OFF by Main/Post, Posts, Users)
+   - Naver SmartEditor ONE Style Rich Block & Text Editor with Locked Sticky Toolbars
+   - Built-in Canvas Photo Studio with Interactive Mouse Drag/Resize Crop Box
    ========================================================= */
 
 const viewerId = (() => {
@@ -21,17 +21,16 @@ const app = {
   categories: [],
   user: null,
   posts: [],
+  stats: { totalPosts: 0, totalViews: 0, totalUsers: 0 },
   currentCategory: '전체',
   currentSort: 'latest',
   currentPost: null,
 
   async init() {
-    // Load theme preference
     if (localStorage.getItem('blog_theme') === 'dark') {
       document.body.classList.add('dark-mode');
     }
 
-    // Close user dropdown when clicking outside
     document.addEventListener('click', (e) => {
       const chip = document.querySelector('.user-profile-chip');
       const dropdown = document.getElementById('userDropdown');
@@ -43,6 +42,7 @@ const app = {
     await this.loadInitialState();
     await this.loadPosts();
     editor.initEvents();
+    photoStudio.initCropEvents();
   },
 
   async api(url, options = {}) {
@@ -71,8 +71,9 @@ const app = {
       this.settings = data.settings || {};
       this.categories = data.categories || ['전체'];
       this.user = data.user || null;
+      this.stats = data.stats || { totalPosts: 0, totalViews: 0, totalUsers: 0 };
 
-      this.renderBrandingAndStats(data.stats);
+      this.renderBrandingAndStats(this.stats);
       this.renderAuthUI();
       this.renderCategories();
       this.renderAdSenseSlots();
@@ -81,7 +82,8 @@ const app = {
     }
   },
 
-  renderBrandingAndStats(stats = {}) {
+  renderBrandingAndStats(stats = this.stats) {
+    this.stats = { ...this.stats, ...stats };
     const title = this.settings.blogTitle || 'MINIMAL LOG.';
     const subtitle = this.settings.blogSubtitle || '';
     document.title = `${title} — 스마트 블로그`;
@@ -91,14 +93,14 @@ const app = {
     document.getElementById('heroSubtitle').textContent = subtitle;
     document.getElementById('sidebarBlogDesc').textContent = subtitle;
 
-    if (stats.totalPosts !== undefined) {
-      document.getElementById('statTotalPosts').textContent = stats.totalPosts.toLocaleString();
+    if (this.stats.totalPosts !== undefined) {
+      document.getElementById('statTotalPosts').textContent = this.stats.totalPosts.toLocaleString();
     }
-    if (stats.totalViews !== undefined) {
-      document.getElementById('statTotalViews').textContent = stats.totalViews.toLocaleString();
+    if (this.stats.totalViews !== undefined) {
+      document.getElementById('statTotalViews').textContent = this.stats.totalViews.toLocaleString();
     }
 
-    // Update Signup Status Indicators everywhere
+    // Signup status indicators
     const allow = !!this.settings.allowSignup;
     const headerSignupBtn = document.getElementById('headerSignupBtn');
     if (headerSignupBtn) {
@@ -112,12 +114,27 @@ const app = {
         : `<i class="ri-lock-2-line" style="color:var(--danger)"></i> 현재 신규 회원가입이 <strong>비활성화됨</strong>`;
     }
 
-    // Admin Quick Toggle Pill in Header
     const quickDot = document.getElementById('quickSignupDot');
     const quickText = document.getElementById('quickSignupText');
     if (quickDot && quickText) {
       quickDot.className = 'status-indicator ' + (allow ? '' : 'closed');
       quickText.textContent = allow ? '회원가입 허용됨 (ON)' : '회원가입 차단됨 (OFF)';
+    }
+
+    // Update Admin Dashboard KPIs if present
+    const kpiPosts = document.getElementById('adminKpiPosts');
+    if (kpiPosts) {
+      kpiPosts.textContent = (this.stats.totalPosts || 0).toLocaleString();
+      document.getElementById('adminKpiViews').textContent = (this.stats.totalViews || 0).toLocaleString();
+      document.getElementById('adminKpiUsers').textContent = (this.stats.totalUsers || 0).toLocaleString();
+      document.getElementById('adminKpiSignupBadge').textContent = allow ? '신규 회원가입 허용 중' : '회원가입 차단됨';
+
+      const masterOn = !!this.settings.adsenseEnabled;
+      const mainOn = masterOn && this.settings.adMainEnabled !== false;
+      const postOn = masterOn && this.settings.adPostEnabled !== false;
+      document.getElementById('adminKpiAds').textContent = masterOn ? 'ON' : 'OFF';
+      document.getElementById('adminKpiAdsSub').textContent =
+        `메인페이지 ${mainOn ? 'ON' : 'OFF'} · 게시글 ${postOn ? 'ON' : 'OFF'}`;
     }
   },
 
@@ -158,7 +175,6 @@ const app = {
       </button>
     `).join('');
 
-    // Populate editor category select (excluding '전체')
     const editorSelect = document.getElementById('editorCategory');
     const writableCats = this.categories.filter(c => c !== '전체');
     editorSelect.innerHTML = (writableCats.length ? writableCats : ['일상/생각']).map(cat => `
@@ -166,17 +182,45 @@ const app = {
     `).join('');
   },
 
+  // Render Google AdSense slots respecting Master, Main Page, Post Page, and individual switches
   renderAdSenseSlots() {
     const s = this.settings;
+    const masterOn = !!s.adsenseEnabled;
+    const mainPageOn = masterOn && s.adMainEnabled !== false;
+    const postPageOn = masterOn && s.adPostEnabled !== false;
+
     const slots = [
-      { id: 'adSlotTopContainer', slotId: s.adSlotTop, label: '상단 반응형 배너 광고 (Google AdSense)', height: '90px' },
-      { id: 'adSlotSidebarContainer', slotId: s.adSlotSidebar, label: '사이드바 멀티플렉스 광고 (Google AdSense)', height: '240px' },
-      { id: 'adSlotInArticleContainer', slotId: s.adSlotInArticle, label: '본문 내 인아티클 반응형 광고 (Google AdSense)', height: '120px' },
-      { id: 'adSlotBottomContainer', slotId: s.adSlotBottom, label: '하단 추천 콘텐츠 광고 (Google AdSense)', height: '110px' }
+      {
+        id: 'adSlotTopContainer',
+        enabled: mainPageOn && s.adTopEnabled !== false,
+        slotId: s.adSlotTop,
+        label: '메인페이지 상단 배너 광고 (Google AdSense)',
+        height: '90px'
+      },
+      {
+        id: 'adSlotSidebarContainer',
+        enabled: mainPageOn && s.adSidebarEnabled !== false,
+        slotId: s.adSlotSidebar,
+        label: '메인페이지 사이드바 광고 (Google AdSense)',
+        height: '240px'
+      },
+      {
+        id: 'adSlotInArticleContainer',
+        enabled: postPageOn && s.adInArticleEnabled !== false,
+        slotId: s.adSlotInArticle,
+        label: '게시글 본문 내 반응형 광고 (Google AdSense)',
+        height: '120px'
+      },
+      {
+        id: 'adSlotBottomContainer',
+        enabled: postPageOn && s.adBottomEnabled !== false,
+        slotId: s.adSlotBottom,
+        label: '게시글 하단 추천 콘텐츠 광고 (Google AdSense)',
+        height: '110px'
+      }
     ];
 
-    // Dynamically load Google AdSense script if enabled and real client ID provided
-    if (s.adsenseEnabled && s.adsenseClientId && !s.adsenseClientId.includes('00000000')) {
+    if (masterOn && s.adsenseClientId && !s.adsenseClientId.includes('00000000')) {
       if (!document.getElementById('adsenseScriptTag')) {
         const script = document.createElement('script');
         script.id = 'adsenseScriptTag';
@@ -190,7 +234,7 @@ const app = {
     slots.forEach(item => {
       const container = document.getElementById(item.id);
       if (!container) return;
-      if (!s.adsenseEnabled) {
+      if (!item.enabled) {
         container.innerHTML = '';
         container.classList.add('hidden');
         return;
@@ -206,7 +250,7 @@ const app = {
           <div class="ad-placeholder-box" style="min-height:${item.height}; display:flex; flex-direction:column; justify-content:center; align-items:center;">
             <span class="ad-badge">AD · GOOGLE ADSENSE</span>
             <div class="ad-placeholder-title"><i class="ri-google-fill"></i> ${item.label}</div>
-            <div class="ad-placeholder-sub">Client: <code>${clientId}</code> · Slot: <code>${slotCode}</code> (관리 설정에서 실제 광고 모드로 전환 가능)</div>
+            <div class="ad-placeholder-sub">Client: <code>${clientId}</code> · Slot: <code>${slotCode}</code> (관리자 페이지에서 ON/OFF 제어 가능)</div>
           </div>
         `;
       } else {
@@ -238,7 +282,6 @@ const app = {
       this.renderPostList();
       this.renderPopularSidebar();
 
-      // Also refresh global view stats
       const initData = await this.api('/api/init');
       this.renderBrandingAndStats(initData.stats);
     } catch (err) {
@@ -351,8 +394,8 @@ const app = {
   },
 
   switchView(viewId) {
-    ['homeView', 'postDetailView', 'editorView'].forEach(id => {
-      document.getElementById(id).classList.toggle('hidden', id !== viewId);
+    ['homeView', 'postDetailView', 'editorView', 'adminPageView'].forEach(id => {
+      document.getElementById(id)?.classList.toggle('hidden', id !== viewId);
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
@@ -375,20 +418,26 @@ const app = {
       document.getElementById('detailViews').textContent = (post.views || 0).toLocaleString();
       document.getElementById('detailLikes').textContent = (post.likes || 0).toLocaleString();
 
-      // Render content & replace any custom in-content ad-break markers
+      // Render content & handle custom in-article ad breaks according to Post Ads ON/OFF settings
       let renderedContent = post.content || '';
-      if (this.settings.adsenseEnabled) {
+      const s = this.settings;
+      const inArticleAdOn = !!s.adsenseEnabled && s.adPostEnabled !== false && s.adInArticleEnabled !== false;
+      if (inArticleAdOn) {
         const inlineAdHtml = `
           <div class="ad-placeholder-box" style="margin:24px 0;">
-            <span class="ad-badge">AD · IN-CONTENT</span>
-            <div class="ad-placeholder-title"><i class="ri-google-fill"></i> 본문 중간 구글 애드센스 광고 영역</div>
+            <span class="ad-badge">AD · IN-ARTICLE</span>
+            <div class="ad-placeholder-title"><i class="ri-google-fill"></i> 게시글 본문 중간 구글 애드센스 광고</div>
           </div>
         `;
         renderedContent = renderedContent.replace(/<div class="se-ad-break"[^>]*>[\s\S]*?<\/div>/gi, inlineAdHtml);
+      } else {
+        renderedContent = renderedContent.replace(/<div class="se-ad-break"[^>]*>[\s\S]*?<\/div>/gi, '');
       }
       document.getElementById('detailContent').innerHTML = renderedContent;
 
-      // Render Attachments Box
+      this.renderAdSenseSlots();
+
+      // Attachments Box
       const attBox = document.getElementById('detailAttachmentsBox');
       const attList = document.getElementById('detailAttachmentsList');
       const atts = post.attachments || [];
@@ -407,13 +456,13 @@ const app = {
         attBox.classList.add('hidden');
       }
 
-      // Render Tags
+      // Tags
       const tagsEl = document.getElementById('detailTags');
       tagsEl.innerHTML = (post.tags || []).map(t => `
         <span class="tag-item">#${this.escapeHtml(t)}</span>
       `).join('');
 
-      // Show Edit/Delete if owner or admin
+      // Owner actions
       const ownerActions = document.getElementById('postOwnerActions');
       if (this.user && (this.user.id === post.authorId || this.user.role === 'admin')) {
         ownerActions.classList.remove('hidden');
@@ -444,18 +493,22 @@ const app = {
     this.toast('게시글 링크가 클립보드에 복사되었습니다.');
   },
 
-  async deletePost(postId) {
+  async deletePost(postId, stayOnAdmin = false) {
     if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
     try {
       await this.api(`/api/posts/${postId}`, { method: 'DELETE' });
       this.toast('게시글이 삭제되었습니다.');
-      this.showHome();
+      if (stayOnAdmin) {
+        await this.loadAdminTables();
+      } else {
+        this.showHome();
+      }
     } catch (err) {
       this.toast(err.message, true);
     }
   },
 
-  // --- AUTHENTICATION & SIGNUP TOGGLE ---
+  // --- AUTHENTICATION ---
   openAuthModal(mode = 'login') {
     document.getElementById('authModal').classList.remove('hidden');
     this.switchAuthTab(mode);
@@ -530,11 +583,12 @@ const app = {
     this.toast('로그아웃되었습니다.');
   },
 
-  // Instant One-Click Signup Allow/Block Toggle for Admin
   async quickToggleSignup() {
     try {
       const data = await this.api('/api/settings/toggle-signup', { method: 'POST' });
       this.settings.allowSignup = data.allowSignup;
+      const checkbox = document.getElementById('settingAllowSignup');
+      if (checkbox) checkbox.checked = !!data.allowSignup;
       this.renderBrandingAndStats();
       this.toast(
         data.allowSignup
@@ -546,14 +600,26 @@ const app = {
     }
   },
 
-  // Admin Settings Modal
-  openAdminModal() {
+  // --- DEDICATED FULL-PAGE ADMIN DASHBOARD ---
+  async openAdminPage(defaultTab = 'general') {
+    if (!this.user || this.user.role !== 'admin') {
+      this.toast('관리자 권한이 필요합니다.', true);
+      return;
+    }
     const s = this.settings;
     document.getElementById('settingAllowSignup').checked = !!s.allowSignup;
     document.getElementById('settingBlogTitle').value = s.blogTitle || '';
     document.getElementById('settingBlogSubtitle').value = s.blogSubtitle || '';
     document.getElementById('settingCategories').value = this.categories.join(', ');
+
     document.getElementById('settingAdsenseEnabled').checked = !!s.adsenseEnabled;
+    document.getElementById('settingAdMainEnabled').checked = s.adMainEnabled !== false;
+    document.getElementById('settingAdPostEnabled').checked = s.adPostEnabled !== false;
+    document.getElementById('settingAdTopEnabled').checked = s.adTopEnabled !== false;
+    document.getElementById('settingAdSidebarEnabled').checked = s.adSidebarEnabled !== false;
+    document.getElementById('settingAdInArticleEnabled').checked = s.adInArticleEnabled !== false;
+    document.getElementById('settingAdBottomEnabled').checked = s.adBottomEnabled !== false;
+
     document.getElementById('settingAdsenseClientId').value = s.adsenseClientId || '';
     document.getElementById('settingShowAdPlaceholder').value = String(s.showAdPlaceholder !== false);
     document.getElementById('settingAdSlotTop').value = s.adSlotTop || '';
@@ -561,14 +627,114 @@ const app = {
     document.getElementById('settingAdSlotSidebar').value = s.adSlotSidebar || '';
     document.getElementById('settingAdSlotBottom').value = s.adSlotBottom || '';
 
-    document.getElementById('adminModal').classList.remove('hidden');
+    document.getElementById('userDropdown')?.classList.add('hidden');
+    this.switchView('adminPageView');
+    this.switchAdminTab(defaultTab);
+    await this.loadAdminTables();
   },
 
-  closeAdminModal() {
-    document.getElementById('adminModal').classList.add('hidden');
+  switchAdminTab(tabName) {
+    document.querySelectorAll('.admin-nav-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    const map = {
+      general: 'adminTabGeneral',
+      ads: 'adminTabAds',
+      posts: 'adminTabPosts',
+      users: 'adminTabUsers'
+    };
+    Object.entries(map).forEach(([key, panelId]) => {
+      document.getElementById(panelId)?.classList.toggle('hidden', key !== tabName);
+    });
   },
 
-  async saveAdminSettings() {
+  async loadAdminTables() {
+    try {
+      const [initRes, postsRes, usersRes] = await Promise.all([
+        this.api('/api/init'),
+        this.api('/api/posts'),
+        this.api('/api/users')
+      ]);
+      this.posts = postsRes.posts || [];
+      this.renderBrandingAndStats(initRes.stats);
+
+      // Render Posts Management Table
+      const postsTbody = document.getElementById('adminPostsTableBody');
+      if (postsTbody) {
+        postsTbody.innerHTML = this.posts.map(p => `
+          <tr>
+            <td><span class="role-badge">${this.escapeHtml(p.category)}</span></td>
+            <td>
+              <strong style="cursor:pointer;" onclick="app.openPost('${p.id}')">${this.escapeHtml(p.title)}</strong>
+            </td>
+            <td>${this.escapeHtml(p.authorName || '관리자')}</td>
+            <td>${this.formatDate(p.createdAt)}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="number" min="0" class="view-edit-input" id="viewInput_${p.id}" value="${p.views || 0}" />
+                <button class="btn btn-outline btn-xs" onclick="app.updatePostViews('${p.id}')">적용</button>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-outline btn-xs" onclick="editor.openEdit('${p.id}')">수정</button>
+                <button class="btn btn-outline btn-xs text-danger" onclick="app.deletePost('${p.id}', true)">삭제</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Render Users Management Table
+      const usersTbody = document.getElementById('adminUsersTableBody');
+      if (usersTbody) {
+        const users = usersRes.users || [];
+        usersTbody.innerHTML = users.map(u => `
+          <tr>
+            <td><strong>@${this.escapeHtml(u.username)}</strong></td>
+            <td>${this.escapeHtml(u.nickname)}</td>
+            <td><span class="role-badge">${u.role.toUpperCase()}</span></td>
+            <td>${this.formatDate(u.createdAt, true)}</td>
+            <td>
+              ${u.role === 'admin'
+                ? '<span style="font-size:0.78rem; color:var(--text-muted);">기본 관리자</span>'
+                : `<button class="btn btn-outline btn-xs text-danger" onclick="app.deleteUser('${u.id}')">회원 삭제</button>`
+              }
+            </td>
+          </tr>
+        `).join('');
+      }
+    } catch (err) {
+      this.toast(err.message, true);
+    }
+  },
+
+  async updatePostViews(postId) {
+    const val = document.getElementById(`viewInput_${postId}`)?.value;
+    try {
+      await this.api(`/api/posts/${postId}/views`, {
+        method: 'PUT',
+        body: JSON.stringify({ views: Number(val) })
+      });
+      await this.loadAdminTables();
+      this.toast('조회수가 업데이트되었습니다.');
+    } catch (err) {
+      this.toast(err.message, true);
+    }
+  },
+
+  async deleteUser(userId) {
+    if (!confirm('이 회원을 삭제하시겠습니까?')) return;
+    try {
+      await this.api(`/api/users/${userId}`, { method: 'DELETE' });
+      await this.loadAdminTables();
+      this.toast('회원이 삭제되었습니다.');
+    } catch (err) {
+      this.toast(err.message, true);
+    }
+  },
+
+  async saveAdminSettings(silentToggle = false) {
     const catsRaw = document.getElementById('settingCategories').value
       .split(',')
       .map(c => c.trim())
@@ -581,6 +747,12 @@ const app = {
       blogSubtitle: document.getElementById('settingBlogSubtitle').value.trim(),
       categories: catsRaw,
       adsenseEnabled: document.getElementById('settingAdsenseEnabled').checked,
+      adMainEnabled: document.getElementById('settingAdMainEnabled').checked,
+      adPostEnabled: document.getElementById('settingAdPostEnabled').checked,
+      adTopEnabled: document.getElementById('settingAdTopEnabled').checked,
+      adSidebarEnabled: document.getElementById('settingAdSidebarEnabled').checked,
+      adInArticleEnabled: document.getElementById('settingAdInArticleEnabled').checked,
+      adBottomEnabled: document.getElementById('settingAdBottomEnabled').checked,
       adsenseClientId: document.getElementById('settingAdsenseClientId').value.trim(),
       showAdPlaceholder: document.getElementById('settingShowAdPlaceholder').value === 'true',
       adSlotTop: document.getElementById('settingAdSlotTop').value.trim(),
@@ -599,14 +771,12 @@ const app = {
       this.renderBrandingAndStats();
       this.renderCategories();
       this.renderAdSenseSlots();
-      this.closeAdminModal();
-      this.toast('블로그 및 광고/회원가입 설정이 저장되었습니다.');
+      this.toast(silentToggle ? '설정이 즉시 반영되었습니다.' : '모든 관리자 설정이 저장되었습니다.');
     } catch (err) {
       this.toast(err.message, true);
     }
   },
 
-  // Utilities
   toast(msg, isError = false) {
     const container = document.getElementById('toastContainer');
     const el = document.createElement('div');
@@ -659,7 +829,6 @@ const editor = {
     const canvas = document.getElementById('editorCanvas');
     const dropZone = document.getElementById('seDropZone');
 
-    // Click inside editor canvas: check if user clicked a photo figure
     canvas.addEventListener('click', (e) => {
       const fig = e.target.closest('figure.se-image');
       if (fig) {
@@ -669,7 +838,6 @@ const editor = {
       }
     });
 
-    // Drag & drop images or files directly into the editor
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.style.borderColor = 'var(--accent)';
@@ -709,7 +877,6 @@ const editor = {
     document.getElementById('editorCanvas').innerHTML = '<p class="se-text"><br></p>';
     document.getElementById('editorTagsInput').value = '';
 
-    // Restore local draft if available
     const savedDraft = localStorage.getItem('smartblog_draft');
     if (savedDraft) {
       try {
@@ -837,7 +1004,6 @@ const editor = {
     this.insertHtmlBlock(html);
   },
 
-  // --- PHOTO UPLOAD & INLINE PHOTO CONTEXT CONTROLS ---
   triggerPhotoUpload() {
     const input = document.getElementById('hiddenPhotoInput');
     input.value = '';
@@ -915,7 +1081,6 @@ const editor = {
     this.deselectFigure();
   },
 
-  // --- FILE ATTACHMENTS ---
   triggerFileUpload() {
     const input = document.getElementById('hiddenFileInput');
     input.value = '';
@@ -967,7 +1132,6 @@ const editor = {
     `).join('');
   },
 
-  // --- PUBLISH POST ---
   async publish() {
     this.deselectFigure();
     const title = document.getElementById('editorTitleInput').value.trim();
@@ -1015,11 +1179,11 @@ const editor = {
 };
 
 /* =========================================================
-   SMART PHOTO STUDIO (IN-BROWSER CANVAS IMAGE EDITOR)
-   - Rotate, Flip, Aspect Ratio Crop, Brightness/Contrast/Saturation, Presets
+   SMART PHOTO STUDIO WITH INTERACTIVE MOUSE DRAG CROP BOX
    ========================================================= */
 const photoStudio = {
-  sourceImage: null,
+  originalImage: null,
+  workingImage: null,
   rotation: 0,
   flipHorizontal: false,
   aspectRatio: 'free',
@@ -1027,6 +1191,97 @@ const photoStudio = {
   brightness: 100,
   contrast: 100,
   saturate: 100,
+
+  // Normalized crop box coordinates (0..1 relative to displayed canvas)
+  cropRect: { x: 0, y: 0, w: 1, h: 1 },
+  dragState: null,
+
+  initCropEvents() {
+    const overlay = document.getElementById('cropOverlayBox');
+    const stage = document.getElementById('studioStage');
+    if (!overlay || !stage) return;
+
+    const onPointerDown = (e) => {
+      if (overlay.classList.contains('hidden')) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const handleEl = e.target.closest('.crop-handle');
+      const mode = handleEl ? handleEl.dataset.handle : 'move';
+      const canvas = document.getElementById('studioCanvas');
+      const rect = canvas.getBoundingClientRect();
+
+      this.dragState = {
+        mode,
+        startX: e.clientX,
+        startY: e.clientY,
+        canvasW: rect.width,
+        canvasH: rect.height,
+        startCrop: { ...this.cropRect }
+      };
+    };
+
+    const onPointerMove = (e) => {
+      if (!this.dragState) return;
+      e.preventDefault();
+      const { mode, startX, startY, canvasW, canvasH, startCrop } = this.dragState;
+      if (!canvasW || !canvasH) return;
+
+      const dx = (e.clientX - startX) / canvasW;
+      const dy = (e.clientY - startY) / canvasH;
+      const minSize = 0.08;
+      let { x, y, w, h } = startCrop;
+
+      if (mode === 'move') {
+        x = Math.max(0, Math.min(1 - w, x + dx));
+        y = Math.max(0, Math.min(1 - h, y + dy));
+      } else {
+        if (mode.includes('w')) {
+          const maxDelta = w - minSize;
+          const d = Math.max(-x, Math.min(maxDelta, dx));
+          x += d;
+          w -= d;
+        }
+        if (mode.includes('e')) {
+          w = Math.max(minSize, Math.min(1 - x, w + dx));
+        }
+        if (mode.includes('n')) {
+          const maxDelta = h - minSize;
+          const d = Math.max(-y, Math.min(maxDelta, dy));
+          y += d;
+          h -= d;
+        }
+        if (mode.includes('s')) {
+          h = Math.max(minSize, Math.min(1 - y, h + dy));
+        }
+
+        // Enforce aspect ratio if locked
+        if (this.aspectRatio !== 'free') {
+          const canvas = document.getElementById('studioCanvas');
+          const targetPxRatio = Number(this.aspectRatio);
+          const normRatio = targetPxRatio * (canvas.height / canvas.width);
+          h = Math.min(1 - y, w / normRatio);
+          w = h * normRatio;
+        }
+      }
+
+      this.cropRect = { x, y, w, h };
+      this.updateCropOverlayUI();
+    };
+
+    const onPointerUp = () => {
+      this.dragState = null;
+    };
+
+    overlay.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('resize', () => {
+      if (!document.getElementById('photoStudioModal').classList.contains('hidden')) {
+        this.updateCropOverlayUI();
+      }
+    });
+  },
 
   openForSelected() {
     if (!editor.selectedFigure) {
@@ -1039,12 +1294,13 @@ const photoStudio = {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      this.sourceImage = img;
-      this.reset();
+      this.originalImage = img;
+      this.workingImage = img;
       document.getElementById('photoStudioModal').classList.remove('hidden');
+      this.reset();
     };
     img.onerror = () => {
-      app.toast('외부 보안 정책(CORS)이 적용된 샘플 이미지는 직접 업로드한 사진으로 테스트해 주세요.', true);
+      app.toast('이미지를 불러올 수 없습니다.', true);
     };
     img.src = imgEl.src;
   },
@@ -1054,6 +1310,7 @@ const photoStudio = {
   },
 
   reset() {
+    this.workingImage = this.originalImage;
     this.rotation = 0;
     this.flipHorizontal = false;
     this.aspectRatio = 'free';
@@ -1061,6 +1318,7 @@ const photoStudio = {
     this.brightness = 100;
     this.contrast = 100;
     this.saturate = 100;
+    this.cropRect = { x: 0, y: 0, w: 1, h: 1 };
 
     document.getElementById('sliderBrightness').value = 100;
     document.getElementById('sliderContrast').value = 100;
@@ -1070,8 +1328,15 @@ const photoStudio = {
     this.renderCanvas();
   },
 
+  resetCropSelection() {
+    this.aspectRatio = 'free';
+    this.cropRect = { x: 0, y: 0, w: 1, h: 1 };
+    this.updateCropOverlayUI();
+  },
+
   rotate(deg) {
     this.rotation = (this.rotation + deg + 360) % 360;
+    this.cropRect = { x: 0, y: 0, w: 1, h: 1 };
     this.renderCanvas();
   },
 
@@ -1082,7 +1347,62 @@ const photoStudio = {
 
   setAspect(ratio) {
     this.aspectRatio = ratio;
-    this.renderCanvas();
+    const canvas = document.getElementById('studioCanvas');
+    if (!canvas.width || !canvas.height) return;
+
+    if (ratio === 'free') {
+      this.cropRect = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 };
+    } else {
+      const targetRatio = Number(ratio);
+      const canvasRatio = canvas.width / canvas.height;
+      let w = 0.8, h = 0.8;
+      if (canvasRatio > targetRatio) {
+        h = 0.8;
+        w = (h * canvas.height * targetRatio) / canvas.width;
+      } else {
+        w = 0.8;
+        h = (w * canvas.width / targetRatio) / canvas.height;
+      }
+      this.cropRect = {
+        x: (1 - w) / 2,
+        y: (1 - h) / 2,
+        w,
+        h
+      };
+    }
+    this.updateCropOverlayUI();
+  },
+
+  // Immediately crop the canvas to the mouse-selected region so user sees the cropped result
+  applyInteractiveCrop() {
+    const canvas = document.getElementById('studioCanvas');
+    const { x, y, w, h } = this.cropRect;
+    if (w >= 0.99 && h >= 0.99 && x <= 0.01 && y <= 0.01) {
+      app.toast('마우스로 초록색 자르기 박스의 모서리를 드래그해 줄인 뒤 눌러주세요.');
+      return;
+    }
+
+    const sx = Math.round(x * canvas.width);
+    const sy = Math.round(y * canvas.height);
+    const sw = Math.max(16, Math.round(w * canvas.width));
+    const sh = Math.max(16, Math.round(h * canvas.height));
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = sw;
+    tempCanvas.height = sh;
+    const tCtx = tempCanvas.getContext('2d');
+    tCtx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    const croppedImg = new Image();
+    croppedImg.onload = () => {
+      this.workingImage = croppedImg;
+      this.rotation = 0;
+      this.flipHorizontal = false;
+      this.cropRect = { x: 0, y: 0, w: 1, h: 1 };
+      this.renderCanvas();
+      app.toast('✂️ 선택한 영역으로 사진이 잘렸습니다!');
+    };
+    croppedImg.src = tempCanvas.toDataURL('image/png');
   },
 
   applyPreset(presetName, btnEl) {
@@ -1110,32 +1430,17 @@ const photoStudio = {
   },
 
   renderCanvas() {
-    if (!this.sourceImage) return;
+    if (!this.workingImage) return;
     const canvas = document.getElementById('studioCanvas');
     const ctx = canvas.getContext('2d');
 
-    const imgW = this.sourceImage.naturalWidth || this.sourceImage.width;
-    const imgH = this.sourceImage.naturalHeight || this.sourceImage.height;
-
-    // Determine crop box from source image center
-    let sx = 0, sy = 0, sw = imgW, sh = imgH;
-    if (this.aspectRatio !== 'free') {
-      const targetRatio = Number(this.aspectRatio);
-      const currentRatio = imgW / imgH;
-      if (currentRatio > targetRatio) {
-        sw = imgH * targetRatio;
-        sx = (imgW - sw) / 2;
-      } else {
-        sh = imgW / targetRatio;
-        sy = (imgH - sh) / 2;
-      }
-    }
+    const imgW = this.workingImage.naturalWidth || this.workingImage.width || 800;
+    const imgH = this.workingImage.naturalHeight || this.workingImage.height || 500;
 
     const isRotated90 = this.rotation === 90 || this.rotation === 270;
-    const outW = isRotated90 ? sh : sw;
-    const outH = isRotated90 ? sw : sh;
+    const outW = isRotated90 ? imgH : imgW;
+    const outH = isRotated90 ? imgW : imgH;
 
-    // Cap max dimension to 1400px for crisp & fast upload
     const scale = Math.min(1, 1400 / Math.max(outW, outH));
     canvas.width = Math.round(outW * scale);
     canvas.height = Math.round(outH * scale);
@@ -1148,13 +1453,50 @@ const photoStudio = {
 
     const drawW = isRotated90 ? canvas.height : canvas.width;
     const drawH = isRotated90 ? canvas.width : canvas.height;
-    ctx.drawImage(this.sourceImage, sx, sy, sw, sh, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.drawImage(this.workingImage, 0, 0, imgW, imgH, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
+
+    requestAnimationFrame(() => this.updateCropOverlayUI());
+  },
+
+  updateCropOverlayUI() {
+    const canvas = document.getElementById('studioCanvas');
+    const overlay = document.getElementById('cropOverlayBox');
+    const badge = document.getElementById('cropSizeBadge');
+    if (!canvas || !overlay) return;
+
+    overlay.classList.remove('hidden');
+    const displayW = canvas.clientWidth || canvas.width;
+    const displayH = canvas.clientHeight || canvas.height;
+
+    const { x, y, w, h } = this.cropRect;
+    overlay.style.left = `${x * displayW}px`;
+    overlay.style.top = `${y * displayH}px`;
+    overlay.style.width = `${w * displayW}px`;
+    overlay.style.height = `${h * displayH}px`;
+
+    if (badge) {
+      const pxW = Math.round(w * canvas.width);
+      const pxH = Math.round(h * canvas.height);
+      badge.textContent = `${pxW} × ${pxH}px`;
+    }
   },
 
   async saveAndApply() {
-    const canvas = document.getElementById('studioCanvas');
-    canvas.toBlob(async (blob) => {
+    const sourceCanvas = document.getElementById('studioCanvas');
+    const { x, y, w, h } = this.cropRect;
+
+    // Export using the current mouse-selected crop box automatically
+    const outCanvas = document.createElement('canvas');
+    const sx = Math.round(x * sourceCanvas.width);
+    const sy = Math.round(y * sourceCanvas.height);
+    const sw = Math.max(16, Math.round(w * sourceCanvas.width));
+    const sh = Math.max(16, Math.round(h * sourceCanvas.height));
+    outCanvas.width = sw;
+    outCanvas.height = sh;
+    outCanvas.getContext('2d').drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    outCanvas.toBlob(async (blob) => {
       if (!blob) return;
       try {
         const formData = new FormData();
@@ -1168,7 +1510,7 @@ const photoStudio = {
           if (img) img.src = uploaded.url;
         }
         this.close();
-        app.toast('✨ 편집된 사진이 본문에 즉시 반영되었습니다!');
+        app.toast('✨ 자르기 및 보정이 적용된 사진이 본문에 반영되었습니다!');
       } catch (err) {
         app.toast(err.message, true);
       }

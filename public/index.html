@@ -27,8 +27,8 @@
           <span id="quickSignupText">회원가입 허용됨</span>
           <i class="ri-refresh-line"></i>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="app.openAdminModal()">
-          <i class="ri-settings-4-line"></i> 관리 설정
+        <button class="btn btn-ghost btn-sm" onclick="app.openAdminPage()">
+          <i class="ri-dashboard-3-line"></i> 관리자 페이지
         </button>
       </div>
 
@@ -63,8 +63,8 @@
               <button class="dropdown-item" onclick="editor.openNew()">
                 <i class="ri-edit-box-line"></i> 새 글 작성
               </button>
-              <button id="dropdownAdminBtn" class="dropdown-item hidden" onclick="app.openAdminModal()">
-                <i class="ri-Sliders-line"></i> 블로그 & 광고/가입 설정
+              <button id="dropdownAdminBtn" class="dropdown-item hidden" onclick="app.openAdminPage()">
+                <i class="ri-dashboard-3-line"></i> 통합 관리자 페이지
               </button>
               <hr />
               <button class="dropdown-item text-danger" onclick="app.logout()">
@@ -219,133 +219,136 @@
     <!-- VIEW 3: NAVER SMART EDITOR ONE STYLE WRITER -->
     <section id="editorView" class="view-section hidden">
       <div class="smart-editor-shell">
-        <!-- Editor Top Bar -->
-        <div class="se-topbar">
-          <div class="se-topbar-left">
-            <button class="btn btn-ghost" onclick="editor.cancel()">
-              <i class="ri-arrow-left-line"></i> 나가기
-            </button>
-            <span class="se-status-badge" id="editorSaveStatus">스마트 에디터 ONE</span>
-          </div>
-          <div class="se-topbar-center">
-            <select id="editorCategory" class="se-category-select"></select>
-          </div>
-          <div class="se-topbar-right">
-            <button class="btn btn-outline btn-sm" onclick="editor.saveDraftLocal()">임시저장</button>
-            <button class="btn btn-primary" onclick="editor.publish()">
-              <i class="ri-check-line"></i> 발행하기
-            </button>
-          </div>
-        </div>
-
-        <!-- Naver SmartEditor Style Sticky Formatting & Block Insert Toolbar -->
-        <div class="se-toolbar">
-          <!-- Block Insert Tools (Big Icon + Label like Naver Blog) -->
-          <div class="se-tool-group se-insert-group">
-            <button type="button" class="se-insert-btn" onclick="editor.triggerPhotoUpload()">
-              <i class="ri-image-add-line"></i>
-              <span>사진</span>
-            </button>
-            <button type="button" class="se-insert-btn" onclick="editor.triggerFileUpload()">
-              <i class="ri-folder-upload-line"></i>
-              <span>파일첨부</span>
-            </button>
-            <button type="button" class="se-insert-btn" onclick="editor.insertQuote()">
-              <i class="ri-double-quotes-l"></i>
-              <span>인용구</span>
-            </button>
-            <button type="button" class="se-insert-btn" onclick="editor.insertDivider()">
-              <i class="ri-separator"></i>
-              <span>구분선</span>
-            </button>
-            <button type="button" class="se-insert-btn" onclick="editor.insertLinkBox()">
-              <i class="ri-links-line"></i>
-              <span>링크카드</span>
-            </button>
-            <button type="button" class="se-insert-btn" onclick="editor.insertAdBreak()">
-              <i class="ri-advertisement-line"></i>
-              <span>광고위치</span>
-            </button>
+        <!-- Sticky Wrapper: Keeps Topbar, Formatting Toolbar, AND Photo Context Bar fixed together on scroll -->
+        <div class="se-sticky-header-stack">
+          <!-- Editor Top Bar -->
+          <div class="se-topbar">
+            <div class="se-topbar-left">
+              <button class="btn btn-ghost" onclick="editor.cancel()">
+                <i class="ri-arrow-left-line"></i> 나가기
+              </button>
+              <span class="se-status-badge" id="editorSaveStatus">스마트 에디터 ONE</span>
+            </div>
+            <div class="se-topbar-center">
+              <select id="editorCategory" class="se-category-select"></select>
+            </div>
+            <div class="se-topbar-right">
+              <button class="btn btn-outline btn-sm" onclick="editor.saveDraftLocal()">임시저장</button>
+              <button class="btn btn-primary" onclick="editor.publish()">
+                <i class="ri-check-line"></i> 발행하기
+              </button>
+            </div>
           </div>
 
-          <div class="se-divider"></div>
+          <!-- Naver SmartEditor Style Sticky Formatting & Block Insert Toolbar -->
+          <div class="se-toolbar">
+            <!-- Block Insert Tools (Big Icon + Label like Naver Blog) -->
+            <div class="se-tool-group se-insert-group">
+              <button type="button" class="se-insert-btn" onclick="editor.triggerPhotoUpload()">
+                <i class="ri-image-add-line"></i>
+                <span>사진</span>
+              </button>
+              <button type="button" class="se-insert-btn" onclick="editor.triggerFileUpload()">
+                <i class="ri-folder-upload-line"></i>
+                <span>파일첨부</span>
+              </button>
+              <button type="button" class="se-insert-btn" onclick="editor.insertQuote()">
+                <i class="ri-double-quotes-l"></i>
+                <span>인용구</span>
+              </button>
+              <button type="button" class="se-insert-btn" onclick="editor.insertDivider()">
+                <i class="ri-separator"></i>
+                <span>구분선</span>
+              </button>
+              <button type="button" class="se-insert-btn" onclick="editor.insertLinkBox()">
+                <i class="ri-links-line"></i>
+                <span>링크카드</span>
+              </button>
+              <button type="button" class="se-insert-btn" onclick="editor.insertAdBreak()">
+                <i class="ri-advertisement-line"></i>
+                <span>광고위치</span>
+              </button>
+            </div>
 
-          <!-- Typography Controls -->
-          <div class="se-tool-group">
-            <select id="seFontFamily" class="se-select" onchange="editor.execFontFamily(this.value)" title="글꼴">
-              <option value="Pretendard, sans-serif">프리텐다드 (고딕)</option>
-              <option value="'Nanum Myeongjo', serif">나눔명조 (명조)</option>
-              <option value="'JetBrains Mono', monospace">고정폭 (코드)</option>
-            </select>
-            <select id="seFormatBlock" class="se-select" onchange="editor.execHeading(this.value)" title="문단 서식">
-              <option value="P">본문</option>
-              <option value="H2">소제목 1 (대)</option>
-              <option value="H3">소제목 2 (중)</option>
-              <option value="H4">소제목 3 (소)</option>
-            </select>
+            <div class="se-divider"></div>
+
+            <!-- Typography Controls -->
+            <div class="se-tool-group">
+              <select id="seFontFamily" class="se-select" onchange="editor.execFontFamily(this.value)" title="글꼴">
+                <option value="Pretendard, sans-serif">프리텐다드 (고딕)</option>
+                <option value="'Nanum Myeongjo', serif">나눔명조 (명조)</option>
+                <option value="'JetBrains Mono', monospace">고정폭 (코드)</option>
+              </select>
+              <select id="seFormatBlock" class="se-select" onchange="editor.execHeading(this.value)" title="문단 서식">
+                <option value="P">본문</option>
+                <option value="H2">소제목 1 (대)</option>
+                <option value="H3">소제목 2 (중)</option>
+                <option value="H4">소제목 3 (소)</option>
+              </select>
+            </div>
+
+            <div class="se-divider"></div>
+
+            <!-- Text Styling -->
+            <div class="se-tool-group">
+              <button type="button" class="se-icon-btn" onclick="editor.exec('bold')" title="굵게 (Ctrl+B)"><i class="ri-bold"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('italic')" title="기울임 (Ctrl+I)"><i class="ri-italic"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('underline')" title="밑줄 (Ctrl+U)"><i class="ri-underline"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('strikeThrough')" title="취소선"><i class="ri-strikethrough"></i></button>
+              <label class="se-color-picker" title="글자 색상">
+                <i class="ri-font-color"></i>
+                <input type="color" value="#10b981" onchange="editor.exec('foreColor', this.value)" />
+              </label>
+              <label class="se-color-picker" title="형광펜 배경색">
+                <i class="ri-mark-pen-line"></i>
+                <input type="color" value="#fef08a" onchange="editor.exec('hiliteColor', this.value)" />
+              </label>
+            </div>
+
+            <div class="se-divider"></div>
+
+            <!-- Alignment & Lists -->
+            <div class="se-tool-group">
+              <button type="button" class="se-icon-btn" onclick="editor.exec('justifyLeft')" title="왼쪽 정렬"><i class="ri-align-left"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('justifyCenter')" title="가운데 정렬"><i class="ri-align-center"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('justifyRight')" title="오른쪽 정렬"><i class="ri-align-right"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('insertUnorderedList')" title="글머리 기호"><i class="ri-list-unordered"></i></button>
+              <button type="button" class="se-icon-btn" onclick="editor.exec('insertOrderedList')" title="번호 매기기"><i class="ri-list-ordered"></i></button>
+            </div>
           </div>
 
-          <div class="se-divider"></div>
-
-          <!-- Text Styling -->
-          <div class="se-tool-group">
-            <button type="button" class="se-icon-btn" onclick="editor.exec('bold')" title="굵게 (Ctrl+B)"><i class="ri-bold"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('italic')" title="기울임 (Ctrl+I)"><i class="ri-italic"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('underline')" title="밑줄 (Ctrl+U)"><i class="ri-underline"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('strikeThrough')" title="취소선"><i class="ri-strikethrough"></i></button>
-            <label class="se-color-picker" title="글자 색상">
-              <i class="ri-font-color"></i>
-              <input type="color" value="#10b981" onchange="editor.exec('foreColor', this.value)" />
-            </label>
-            <label class="se-color-picker" title="형광펜 배경색">
-              <i class="ri-mark-pen-line"></i>
-              <input type="color" value="#fef08a" onchange="editor.exec('hiliteColor', this.value)" />
-            </label>
-          </div>
-
-          <div class="se-divider"></div>
-
-          <!-- Alignment & Lists -->
-          <div class="se-tool-group">
-            <button type="button" class="se-icon-btn" onclick="editor.exec('justifyLeft')" title="왼쪽 정렬"><i class="ri-align-left"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('justifyCenter')" title="가운데 정렬"><i class="ri-align-center"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('justifyRight')" title="오른쪽 정렬"><i class="ri-align-right"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('insertUnorderedList')" title="글머리 기호"><i class="ri-list-unordered"></i></button>
-            <button type="button" class="se-icon-btn" onclick="editor.exec('insertOrderedList')" title="번호 매기기"><i class="ri-list-ordered"></i></button>
+          <!-- Fixed Photo Context Bar (Locked inside sticky stack so it NEVER drifts when scrolling down) -->
+          <div id="sePhotoContextBar" class="se-photo-context-bar hidden">
+            <div class="context-group">
+              <button type="button" class="ctx-btn ctx-primary" onclick="photoStudio.openForSelected()">
+                <i class="ri-magic-line"></i> 사진 상세 편집 (자르기/필터/보정)
+              </button>
+            </div>
+            <div class="ctx-sep"></div>
+            <div class="context-group">
+              <button type="button" class="ctx-btn" onclick="editor.resizeSelectedImage('40%')">작게</button>
+              <button type="button" class="ctx-btn" onclick="editor.resizeSelectedImage('70%')">중간</button>
+              <button type="button" class="ctx-btn" onclick="editor.resizeSelectedImage('100%')">본문폭</button>
+            </div>
+            <div class="ctx-sep"></div>
+            <div class="context-group">
+              <button type="button" class="ctx-btn" onclick="editor.alignSelectedImage('left')" title="왼쪽 정렬"><i class="ri-align-left"></i></button>
+              <button type="button" class="ctx-btn" onclick="editor.alignSelectedImage('center')" title="가운데 정렬"><i class="ri-align-center"></i></button>
+              <button type="button" class="ctx-btn" onclick="editor.alignSelectedImage('right')" title="오른쪽 정렬"><i class="ri-align-right"></i></button>
+            </div>
+            <div class="ctx-sep"></div>
+            <div class="context-group">
+              <button type="button" class="ctx-btn" onclick="editor.toggleSelectedImageStyle('rounded')" title="둥근 모서리"><i class="ri-rounded-corner"></i></button>
+              <button type="button" class="ctx-btn" onclick="editor.toggleSelectedImageStyle('shadow')" title="입체 그림자"><i class="ri-drop-line"></i></button>
+              <button type="button" class="ctx-btn" onclick="editor.setAsThumbnail()" title="대표 썸네일로 지정"><i class="ri-star-line"></i> 대표지정</button>
+              <button type="button" class="ctx-btn text-danger" onclick="editor.removeSelectedImage()" title="사진 삭제"><i class="ri-delete-bin-line"></i></button>
+            </div>
           </div>
         </div>
 
         <!-- Hidden File Inputs for Photo & Attachments -->
         <input type="file" id="hiddenPhotoInput" accept="image/*" multiple class="hidden" onchange="editor.handlePhotoFiles(this.files)" />
         <input type="file" id="hiddenFileInput" multiple class="hidden" onchange="editor.handleAttachmentFiles(this.files)" />
-
-        <!-- Floating Contextual Photo Action Bar (Appears when an image inside the editor is clicked) -->
-        <div id="sePhotoContextBar" class="se-photo-context-bar hidden">
-          <div class="context-group">
-            <button type="button" class="ctx-btn ctx-primary" onclick="photoStudio.openForSelected()">
-              <i class="ri-magic-line"></i> 사진 상세 편집 (자르기/필터/보정)
-            </button>
-          </div>
-          <div class="ctx-sep"></div>
-          <div class="context-group">
-            <button type="button" class="ctx-btn" onclick="editor.resizeSelectedImage('40%')">작게</button>
-            <button type="button" class="ctx-btn" onclick="editor.resizeSelectedImage('70%')">중간</button>
-            <button type="button" class="ctx-btn" onclick="editor.resizeSelectedImage('100%')">본문폭</button>
-          </div>
-          <div class="ctx-sep"></div>
-          <div class="context-group">
-            <button type="button" class="ctx-btn" onclick="editor.alignSelectedImage('left')" title="왼쪽 정렬"><i class="ri-align-left"></i></button>
-            <button type="button" class="ctx-btn" onclick="editor.alignSelectedImage('center')" title="가운데 정렬"><i class="ri-align-center"></i></button>
-            <button type="button" class="ctx-btn" onclick="editor.alignSelectedImage('right')" title="오른쪽 정렬"><i class="ri-align-right"></i></button>
-          </div>
-          <div class="ctx-sep"></div>
-          <div class="context-group">
-            <button type="button" class="ctx-btn" onclick="editor.toggleSelectedImageStyle('rounded')" title="둥근 모서리"><i class="ri-rounded-corner"></i></button>
-            <button type="button" class="ctx-btn" onclick="editor.toggleSelectedImageStyle('shadow')" title="입체 그림자"><i class="ri-drop-line"></i></button>
-            <button type="button" class="ctx-btn" onclick="editor.setAsThumbnail()" title="대표 썸네일로 지정"><i class="ri-star-line"></i> 대표지정</button>
-            <button type="button" class="ctx-btn text-danger" onclick="editor.removeSelectedImage()" title="사진 삭제"><i class="ri-delete-bin-line"></i></button>
-          </div>
-        </div>
 
         <!-- Paper Canvas Area -->
         <div class="se-paper-container" id="seDropZone">
@@ -379,6 +382,302 @@
         </div>
       </div>
     </section>
+
+    <!-- VIEW 4: DEDICATED ADMIN DASHBOARD PAGE (All Blog, AdSense, Post, and User Management) -->
+    <section id="adminPageView" class="view-section hidden">
+      <div class="admin-dashboard">
+        <!-- Admin Page Header -->
+        <div class="admin-page-header">
+          <div>
+            <span class="admin-eyebrow"><i class="ri-shield-star-line"></i> ADMINISTRATOR CONSOLE</span>
+            <h2>블로그 통합 관리자 페이지</h2>
+            <p>블로그 기본 설정, 회원가입 허용/차단, 메인페이지 및 게시글 구글 광고 ON/OFF, 게시글·회원 관리를 한곳에서 제어합니다.</p>
+          </div>
+          <div class="admin-header-actions">
+            <button class="btn btn-outline" onclick="app.showHome()">
+              <i class="ri-arrow-left-line"></i> 블로그 홈으로
+            </button>
+            <button class="btn btn-primary" onclick="app.saveAdminSettings()">
+              <i class="ri-save-line"></i> 모든 설정 저장하기
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi-card">
+            <div class="kpi-label">전체 게시글</div>
+            <div class="kpi-value" id="adminKpiPosts">0</div>
+            <div class="kpi-sub">발행된 포스트 수</div>
+          </div>
+          <div class="admin-kpi-card">
+            <div class="kpi-label">누적 조회수</div>
+            <div class="kpi-value" id="adminKpiViews">0</div>
+            <div class="kpi-sub">전체 게시글 합산 조회</div>
+          </div>
+          <div class="admin-kpi-card">
+            <div class="kpi-label">가입 회원 수</div>
+            <div class="kpi-value" id="adminKpiUsers">0</div>
+            <div class="kpi-sub" id="adminKpiSignupBadge">회원가입 열림</div>
+          </div>
+          <div class="admin-kpi-card">
+            <div class="kpi-label">구글 애드센스 상태</div>
+            <div class="kpi-value" id="adminKpiAds">ON</div>
+            <div class="kpi-sub" id="adminKpiAdsSub">메인 ON · 게시글 ON</div>
+          </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-nav-tabs">
+          <button type="button" class="admin-nav-tab active" data-tab="general" onclick="app.switchAdminTab('general')">
+            <i class="ri-settings-4-line"></i> 기본 정보 & 회원가입 설정
+          </button>
+          <button type="button" class="admin-nav-tab" data-tab="ads" onclick="app.switchAdminTab('ads')">
+            <i class="ri-advertisement-line"></i> 구글 애드센스 광고 설정 (메인/게시글 ON·OFF)
+          </button>
+          <button type="button" class="admin-nav-tab" data-tab="posts" onclick="app.switchAdminTab('posts')">
+            <i class="ri-article-line"></i> 게시글 및 조회수 관리
+          </button>
+          <button type="button" class="admin-nav-tab" data-tab="users" onclick="app.switchAdminTab('users')">
+            <i class="ri-team-line"></i> 회원 목록 관리
+          </button>
+        </div>
+
+        <!-- TAB 1: General & Signup Control -->
+        <div id="adminTabGeneral" class="admin-tab-panel">
+          <div class="admin-section highlight-box">
+            <div class="switch-row">
+              <div>
+                <h4><i class="ri-user-follow-line"></i> 신규 회원가입 허용 스위치</h4>
+                <p>이 스위치를 켜면 방문자가 자유롭게 회원가입할 수 있고, 끄면 회원가입 버튼이 숨겨지며 기존 회원/관리자만 로그인할 수 있습니다.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="settingAllowSignup" onchange="app.saveAdminSettings(true)" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="admin-section">
+            <h4>블로그 기본 정보 및 카테고리 설정</h4>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>블로그 이름 (Title)</label>
+                <input type="text" id="settingBlogTitle" placeholder="예: MINIMAL LOG." />
+              </div>
+              <div class="form-group">
+                <label>카테고리 목록 (쉼표로 구분)</label>
+                <input type="text" id="settingCategories" placeholder="전체, 일상/생각, 테크/개발, 리뷰/노하우, 사진/여행" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>블로그 소개 문구 (Subtitle)</label>
+              <input type="text" id="settingBlogSubtitle" placeholder="일상과 기술, 그리고 생각을 기록하는 심플한 공간" />
+            </div>
+            <div class="admin-panel-actions">
+              <button type="button" class="btn btn-primary" onclick="app.saveAdminSettings()">
+                <i class="ri-check-line"></i> 기본 설정 저장
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Google AdSense Controls (Master, Main Page, Post Page, Individual Slots) -->
+        <div id="adminTabAds" class="admin-tab-panel hidden">
+          <!-- Master AdSense Switch -->
+          <div class="admin-section highlight-box">
+            <div class="switch-row">
+              <div>
+                <h4><i class="ri-google-fill"></i> 구글 애드센스(Google AdSense) 전체 광고 마스터 스위치</h4>
+                <p>블로그 전체의 구글 광고 노출을 한 번에 켜거나 끕니다. 끄면 모든 페이지에서 광고 영역이 즉시 사라집니다.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="settingAdsenseEnabled" onchange="app.saveAdminSettings(true)" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Page-Level Switches: Main Page Ads vs Post Detail Ads -->
+          <div class="ad-control-grid">
+            <!-- Main Page Ads Card -->
+            <div class="admin-section ad-group-card">
+              <div class="switch-row ad-group-header">
+                <div>
+                  <h4><i class="ri-home-4-line"></i> 메인페이지 광고 표시</h4>
+                  <p>블로그 첫 화면(목록 페이지)에 표시되는 광고를 켜거나 끕니다.</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingAdMainEnabled" onchange="app.saveAdminSettings(true)" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <hr class="admin-hr" />
+              <div class="slot-sub-item">
+                <div class="switch-row">
+                  <div>
+                    <strong>메인 상단 배너 광고 (Top Banner)</strong>
+                    <p>히어로 배너 바로 아래 전체 폭 반응형 배너</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="settingAdTopEnabled" onchange="app.saveAdminSettings(true)" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                  <label>상단 배너 슬롯 ID (data-ad-slot)</label>
+                  <input type="text" id="settingAdSlotTop" placeholder="예: 1111111111" />
+                </div>
+              </div>
+
+              <div class="slot-sub-item">
+                <div class="switch-row">
+                  <div>
+                    <strong>메인 우측 사이드바 광고 (Sidebar Box)</strong>
+                    <p>인기글 위젯 아래에 배치되는 사이드바 광고</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="settingAdSidebarEnabled" onchange="app.saveAdminSettings(true)" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                  <label>사이드바 광고 슬롯 ID (data-ad-slot)</label>
+                  <input type="text" id="settingAdSlotSidebar" placeholder="예: 3333333333" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Post Detail Page Ads Card -->
+            <div class="admin-section ad-group-card">
+              <div class="switch-row ad-group-header">
+                <div>
+                  <h4><i class="ri-file-text-line"></i> 게시글 본문 페이지 광고 표시</h4>
+                  <p>독자가 글을 읽을 때 게시글 내부 및 하단에 표시되는 광고를 켜거나 끕니다.</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingAdPostEnabled" onchange="app.saveAdminSettings(true)" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <hr class="admin-hr" />
+              <div class="slot-sub-item">
+                <div class="switch-row">
+                  <div>
+                    <strong>게시글 본문 내 광고 (In-Article & 에디터 광고위치)</strong>
+                    <p>본문 중간 `[광고위치]` 블록 및 글 본문 직후에 표시되는 광고</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="settingAdInArticleEnabled" onchange="app.saveAdminSettings(true)" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                  <label>본문 내 광고 슬롯 ID (data-ad-slot)</label>
+                  <input type="text" id="settingAdSlotInArticle" placeholder="예: 2222222222" />
+                </div>
+              </div>
+
+              <div class="slot-sub-item">
+                <div class="switch-row">
+                  <div>
+                    <strong>게시글 하단 광고 (Bottom Multiplex)</strong>
+                    <p>게시글 공감/태그 영역 아래 하단에 표시되는 추천형 광고</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="settingAdBottomEnabled" onchange="app.saveAdminSettings(true)" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                  <label>글 하단 광고 슬롯 ID (data-ad-slot)</label>
+                  <input type="text" id="settingAdSlotBottom" placeholder="예: 4444444444" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AdSense Publisher Account Credentials -->
+          <div class="admin-section">
+            <h4>애드센스 계정 연동 및 미리보기 모드</h4>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>구글 애드센스 게시자 ID (Client ID)</label>
+                <input type="text" id="settingAdsenseClientId" placeholder="ca-pub-0000000000000000" />
+              </div>
+              <div class="form-group">
+                <label>광고 표시 방식 (미리보기 vs 실제 광고 코드)</label>
+                <select id="settingShowAdPlaceholder" class="form-select" onchange="app.saveAdminSettings(true)">
+                  <option value="true">광고 영역 미리보기 박스 표시 (디자인/위치 확인용)</option>
+                  <option value="false">실제 Google AdSense 스크립트 태그만 렌더링</option>
+                </select>
+              </div>
+            </div>
+            <div class="admin-panel-actions">
+              <button type="button" class="btn btn-primary" onclick="app.saveAdminSettings()">
+                <i class="ri-save-line"></i> 광고 설정 저장하기
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Posts & View Count Management -->
+        <div id="adminTabPosts" class="admin-tab-panel hidden">
+          <div class="admin-section">
+            <div class="switch-row" style="margin-bottom:14px;">
+              <div>
+                <h4>전체 게시글 및 조회수 관리</h4>
+                <p>작성된 게시글의 조회수를 수정하거나 바로 편집·삭제할 수 있습니다.</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="editor.openNew()">
+                <i class="ri-quill-pen-line"></i> 새 게시글 쓰기
+              </button>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>카테고리</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                    <th>조회수 (직접 수정 가능)</th>
+                    <th>관리</th>
+                  </tr>
+                </thead>
+                <tbody id="adminPostsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Registered Users Management -->
+        <div id="adminTabUsers" class="admin-tab-panel hidden">
+          <div class="admin-section">
+            <div class="switch-row" style="margin-bottom:14px;">
+              <div>
+                <h4>가입 회원 관리</h4>
+                <p>현재 블로그에 가입된 회원 목록을 확인하고 관리합니다.</p>
+              </div>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>아이디</th>
+                    <th>닉네임</th>
+                    <th>권한</th>
+                    <th>가입일</th>
+                    <th>관리</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- PHOTO STUDIO MODAL (Smart Photo Editing: Crop, Rotate, Brightness/Contrast/Saturation, Filters) -->
@@ -389,22 +688,46 @@
         <button class="icon-btn" onclick="photoStudio.close()"><i class="ri-close-line"></i></button>
       </div>
       <div class="studio-body">
-        <div class="studio-canvas-wrap">
-          <canvas id="studioCanvas"></canvas>
+        <div class="studio-canvas-wrap" id="studioCanvasWrap">
+          <div class="studio-stage" id="studioStage">
+            <canvas id="studioCanvas"></canvas>
+            <!-- Interactive Mouse Drag/Resize Crop Box Overlay -->
+            <div id="cropOverlayBox" class="crop-overlay-box hidden">
+              <div class="crop-grid-lines"></div>
+              <span class="crop-size-badge" id="cropSizeBadge">0 × 0</span>
+              <div class="crop-handle handle-nw" data-handle="nw"></div>
+              <div class="crop-handle handle-n" data-handle="n"></div>
+              <div class="crop-handle handle-ne" data-handle="ne"></div>
+              <div class="crop-handle handle-e" data-handle="e"></div>
+              <div class="crop-handle handle-se" data-handle="se"></div>
+              <div class="crop-handle handle-s" data-handle="s"></div>
+              <div class="crop-handle handle-sw" data-handle="sw"></div>
+              <div class="crop-handle handle-w" data-handle="w"></div>
+            </div>
+          </div>
+          <p class="crop-guide-tip"><i class="ri-drag-move-2-line"></i> 마우스로 사진 위 초록색 자르기 테두리나 모서리 핸들을 드래그하여 원하는 크기로 줄이거나 이동하세요.</p>
         </div>
         <div class="studio-controls">
           <div class="control-section">
-            <label>회전 및 비율 자르기 (Crop)</label>
+            <label>마우스 자르기 (Crop) & 회전</label>
             <div class="studio-btn-row">
+              <button type="button" class="btn btn-primary btn-xs" onclick="photoStudio.applyInteractiveCrop()">
+                <i class="ri-crop-line"></i> 선택한 영역 자르기 실행
+              </button>
+              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.resetCropSelection()">
+                전체 영역 선택
+              </button>
+            </div>
+            <div class="studio-btn-row" style="margin-top:8px;">
+              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect('free')">자유 드래그</button>
+              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect(1)">1:1 비율</button>
+              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect(16/9)">16:9 비율</button>
+              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect(4/3)">4:3 비율</button>
+            </div>
+            <div class="studio-btn-row" style="margin-top:8px;">
               <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.rotate(-90)"><i class="ri-anticlockwise-2-line"></i> 왼쪽 90°</button>
               <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.rotate(90)"><i class="ri-clockwise-2-line"></i> 오른쪽 90°</button>
               <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.flipH()"><i class="ri-arrow-left-right-line"></i> 좌우반전</button>
-            </div>
-            <div class="studio-btn-row" style="margin-top:6px;">
-              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect('free')">원본 비율</button>
-              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect(1)">1:1 정방형</button>
-              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect(16/9)">16:9 와이드</button>
-              <button type="button" class="btn btn-outline btn-xs" onclick="photoStudio.setAspect(4/3)">4:3 표준</button>
             </div>
           </div>
 
@@ -498,107 +821,6 @@
           <button type="submit" class="btn btn-primary btn-block">회원가입 완료</button>
         </div>
       </form>
-    </div>
-  </div>
-
-  <!-- ADMIN & ADSENSE & SIGNUP CONTROL MODAL -->
-  <div id="adminModal" class="modal-backdrop hidden">
-    <div class="modal-card admin-card">
-      <div class="modal-header">
-        <h3><i class="ri-settings-4-line"></i> 블로그 관리 및 광고/회원가입 설정</h3>
-        <button class="icon-btn" onclick="app.closeAdminModal()"><i class="ri-close-line"></i></button>
-      </div>
-      <div class="admin-body">
-        <!-- Section 1: Signup Toggle Control -->
-        <div class="admin-section highlight-box">
-          <div class="switch-row">
-            <div>
-              <h4>신규 회원가입 허용</h4>
-              <p>이 스위치를 끄면 방문자가 회원가입을 할 수 없으며 오직 기존 회원/관리자만 로그인할 수 있습니다.</p>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingAllowSignup" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Section 2: Basic Blog Identity -->
-        <div class="admin-section">
-          <h4>기본 블로그 정보</h4>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>블로그 제목</label>
-              <input type="text" id="settingBlogTitle" />
-            </div>
-            <div class="form-group">
-              <label>카테고리 목록 (쉼표로 구분)</label>
-              <input type="text" id="settingCategories" placeholder="전체, 일상/생각, 테크/개발, 리뷰/노하우" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>블로그 소개 문구</label>
-            <input type="text" id="settingBlogSubtitle" />
-          </div>
-        </div>
-
-        <!-- Section 3: Google AdSense Management -->
-        <div class="admin-section">
-          <div class="switch-row" style="margin-bottom:12px;">
-            <div>
-              <h4><i class="ri-google-fill"></i> 구글 애드센스(Google AdSense) 광고 활성화</h4>
-              <p>상단 배너, 본문 중간, 사이드바, 하단 영역에 반응형 구글 광고를 배치합니다.</p>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingAdsenseEnabled" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>애드센스 게시자 ID (Client ID)</label>
-              <input type="text" id="settingAdsenseClientId" placeholder="ca-pub-0000000000000000" />
-            </div>
-            <div class="form-group">
-              <label>광고 미리보기 플레이스홀더 표시</label>
-              <select id="settingShowAdPlaceholder" class="form-select">
-                <option value="true">표시함 (디자인/위치 확인용)</option>
-                <option value="false">실제 애드센스 코드만 렌더링</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>상단 배너 슬롯 ID (Top Banner)</label>
-              <input type="text" id="settingAdSlotTop" placeholder="예: 1111111111" />
-            </div>
-            <div class="form-group">
-              <label>본문 내 삽입 슬롯 ID (In-Article)</label>
-              <input type="text" id="settingAdSlotInArticle" placeholder="예: 2222222222" />
-            </div>
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>사이드바 슬롯 ID (Sidebar)</label>
-              <input type="text" id="settingAdSlotSidebar" placeholder="예: 3333333333" />
-            </div>
-            <div class="form-group">
-              <label>글 하단 슬롯 ID (Bottom Multiplex)</label>
-              <input type="text" id="settingAdSlotBottom" placeholder="예: 4444444444" />
-            </div>
-          </div>
-        </div>
-
-        <div class="admin-footer">
-          <button class="btn btn-ghost" onclick="app.closeAdminModal()">취소</button>
-          <button class="btn btn-primary" onclick="app.saveAdminSettings()">
-            <i class="ri-save-line"></i> 설정 저장하기
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 

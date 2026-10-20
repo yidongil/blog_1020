@@ -28,6 +28,12 @@ function initDB() {
         blogSubtitle: '일상과 기술, 그리고 생각을 기록하는 심플한 공간',
         allowSignup: true,
         adsenseEnabled: true,
+        adMainEnabled: true,
+        adPostEnabled: true,
+        adTopEnabled: true,
+        adSidebarEnabled: true,
+        adInArticleEnabled: true,
+        adBottomEnabled: true,
         adsenseClientId: 'ca-pub-0000000000000000',
         adSlotTop: '1111111111',
         adSlotInArticle: '2222222222',
@@ -110,7 +116,17 @@ function initDB() {
 initDB();
 
 function readDB() {
-  return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  const defaultAdFlags = {
+    adMainEnabled: true,
+    adPostEnabled: true,
+    adTopEnabled: true,
+    adSidebarEnabled: true,
+    adInArticleEnabled: true,
+    adBottomEnabled: true
+  };
+  db.settings = { ...defaultAdFlags, ...db.settings };
+  return db;
 }
 
 function writeDB(data) {
@@ -257,7 +273,9 @@ app.put('/api/settings', requireAdmin, (req, res) => {
   const db = readDB();
   const allowedFields = [
     'blogTitle', 'blogSubtitle', 'allowSignup',
-    'adsenseEnabled', 'adsenseClientId',
+    'adsenseEnabled', 'adMainEnabled', 'adPostEnabled',
+    'adTopEnabled', 'adSidebarEnabled', 'adInArticleEnabled', 'adBottomEnabled',
+    'adsenseClientId',
     'adSlotTop', 'adSlotInArticle', 'adSlotSidebar', 'adSlotBottom',
     'showAdPlaceholder'
   ];
@@ -468,7 +486,7 @@ app.get('/api/download/:filename', (req, res) => {
   res.download(filePath, downloadName);
 });
 
-// Users list for admin
+// Users list & management for admin
 app.get('/api/users', requireAdmin, (req, res) => {
   const db = readDB();
   const users = db.users.map(u => ({
@@ -479,6 +497,27 @@ app.get('/api/users', requireAdmin, (req, res) => {
     createdAt: u.createdAt
   }));
   res.json({ users });
+});
+
+app.delete('/api/users/:id', requireAdmin, (req, res) => {
+  const db = readDB();
+  const target = db.users.find(u => u.id === req.params.id);
+  if (!target) return res.status(404).json({ error: '회원을 찾을 수 없습니다.' });
+  if (target.role === 'admin') {
+    return res.status(400).json({ error: '관리자 계정은 삭제할 수 없습니다.' });
+  }
+  db.users = db.users.filter(u => u.id !== req.params.id);
+  writeDB(db);
+  res.json({ success: true });
+});
+
+app.put('/api/posts/:id/views', requireAdmin, (req, res) => {
+  const db = readDB();
+  const post = db.posts.find(p => p.id === req.params.id);
+  if (!post) return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+  post.views = Math.max(0, parseInt(req.body.views, 10) || 0);
+  writeDB(db);
+  res.json({ post });
 });
 
 app.listen(PORT, () => {
